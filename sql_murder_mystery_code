@@ -1,0 +1,118 @@
+
+--About Dataset
+--There's been a Murder in SQL City! 
+--A crime has taken place and the detective needs your help. 
+--The detective gave you the crime scene report, but you somehow lost it.
+--You vaguely remember that the crime was a ​murder​ that occurred sometime on ​Jan.15, 2018​ and 
+--that it took place in ​SQL City​. 
+--https://mystery.knightlab.com/
+
+
+--     FIND THE CRIME --
+CREATE VIEW [crime] AS
+SELECT * FROM 
+crime_scene_report
+WHERE date =20180115 AND
+city like('%SQL City%')
+AND type like('%murder%');
+
+
+
+SELECT description FROM crime;
+--Security footage shows that there were 2 witnesses. 
+--The first witness lives at the last house on "Northwestern Dr". 
+--The second witness, named Annabel, lives somewhere on "Franklin Ave".
+
+-- Find the witness interview statements--
+CREATE  VIEW wittness_interview AS
+SELECT * FROM person p
+JOIN interview I
+ON p.id = I.person_id
+WHERE 
+    (p.name like('%Annabel%')
+    AND p.address_street_name like('%Franklin Ave%')) 
+    OR
+    p.address_street_name like('%Northwestern Dr%')
+    AND p.ID in(14887,16371);
+SELECT * FROM wittness_interview;
+--Morty Schapiro - 
+--I heard a gunshot and then saw a man run out. 
+--He had a "Get Fit Now Gym" bag. 
+--The membership number on the bag started with "48Z". 
+--Only gold members have those bags. The man got into a car with a plate that included "H42W".
+
+--Annabel Miller
+--I saw the murder happen, 
+--and I recognized the killer from my gym when I was working out last week on January the 9th.
+
+--find the Gym member and check in on 9th January--
+--Find Joe Gernuska and Jerramy Bowers with gold membership check in on 09th January from 1600 and 1730
+--and same time period Annabel also there, hence her testomony is clear that she saw the peron in Gym
+create view gym_member_check_in as
+Select * From get_fit_now_member mem
+join get_fit_now_check_in cI
+on  mem.id = cI.membership_id
+Where (mem.id like('%48Z%')
+And mem.membership_status = 'gold'
+and cI.check_in_date = 20180109)
+or mem.person_id in(14887,16371);
+
+-- Now we can track the car plate number belongs to which person 
+
+--Suspect all data--
+create view suspect_all_data as 
+Select * From
+suspect_gym_membership JM
+join person p
+on p.id = JM.person_id;
+
+---find the car plate number---
+-- find the murdere--
+create view murdere as 
+Select * From
+suspect_all_data ad
+Join drivers_license dl
+on 
+ad.license_id = dl.id;
+
+---Find the murdere statement- 
+Select * from murdere m
+join interview i
+on m.person_id = i.person_id;
+
+--Murdere Statement
+--"I was hired by a woman with a lot of money. 
+---I don't know her name but I know she's around 5'5"" (65"") or 5'7"" (67""). 
+---She has red hair and she drives a Tesla Model S. 
+---I know that she attended the SQL Symphony Concert 3 times in December 2017.
+
+
+
+---Find Hired person---
+--create view if not exists hired_person as;
+WITH CTE AS (
+Select person_id, event_name,
+COUNT() AS event_attend
+from 
+facebook_event_checkin
+where date between 20171201 and 20171231
+and event_name = 'SQL Symphony Concert'
+Group by 
+person_id, event_name
+HAVING COUNT()>=3
+)
+
+
+Select * From drivers_license as dl
+Join person as p
+on dl.id = p.license_id
+Join CTE as fb 
+on fb.person_id = p.id
+
+Where 
+(dl.height >= 65 or
+dl.height <= 67)
+and dl.car_make like('%Tesla%')
+and dl.gender = 'female'
+and dl.hair_color = 'red'
+and dl.car_model = 'Model S'
