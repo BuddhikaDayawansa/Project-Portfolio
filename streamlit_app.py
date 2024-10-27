@@ -38,6 +38,8 @@ if ingredients_list:
 
     for fruit_choosen in ingredients_list:
         ingredients_string += fruit_choosen + ' '
+        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
+        st.text(fruityvice_response.json())
     
     # st.write(ingredients_string)
 
@@ -55,5 +57,4 @@ if ingredients_list:
         st.success('Your Smoothie is ordered!', icon="✅")
 
 import requests
-fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
-st.text(fruityvice_response.json())
+
